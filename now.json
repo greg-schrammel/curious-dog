@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "cdn/*", "use": "@now/static" },
+    { "src": "package.json", "use": "@now/next" }
+  ],
+  "build": {
+    "env": {
+      "NODE_PATH": "."
+    }
+  }
+}
