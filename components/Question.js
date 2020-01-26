@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { FaTwitter } from "react-icons/fa";
-import { MdSend, MdMoreVert } from "react-icons/md";
+import { FiSend } from "react-icons/fi";
+import { IoIosClose } from "react-icons/io";
 import {
-  Avatar,
+  Image,
   Box,
   Textarea,
   Stack,
@@ -15,11 +16,10 @@ import {
 } from "@chakra-ui/core";
 
 import { useMachine } from "hooks/useMachine"; // TODO: the npm package is not working, I copied the code from the repo and it works
+import useEventListener from "@use-it/event-listener";
+import useFocusOnRender from "hooks/useFocusOnRender";
 
 import questionMachine from "components/questionMachine";
-
-import useOutsideObserver from "hooks/useOutsideObserver";
-import useFocus from "hooks/useFocus";
 
 import i18n from "utils/i18n";
 
@@ -27,143 +27,134 @@ function randomDogAvatar() {
   return "/cdn/008-corgi.svg";
 }
 
-function QuestionHeader({ from }) {
-  return (
-    <Flex height="3rem" justify="space-between">
-      <Stack isInline>
-        <Avatar src={from?.avatar ?? randomDogAvatar()} />
-        <Text paddingLeft="1rem" alignSelf="center">
-          <Link fontWeight="bold">{from?.name ?? i18n("anonymous")}</Link>
-          {" perguntou"}
-        </Text>
-      </Stack>
-    </Flex>
-  );
-}
-
-function QuestionBody({ question }) {
-  return (
-    <Heading size={question.length > 20 ? "lg" : "xl"} padding="0.6rem 0">
-      {question}
-    </Heading>
-  );
-}
-
-function Loader() {
-  return <div></div>;
-}
-
-function SuccessMessage() {
-  return <div></div>;
-}
-
-function FailureMessage() {
-  return <div></div>;
-}
-
 const questionBox = {
-  borderWidth: "12px",
   rounded: "lg",
-  maxW: "sm",
-  boxShadow: "0px 3px 21px 0px #dbdbdb",
+  backgroundColor: "white",
   padding: "1rem",
-  margin: "1rem",
-  overflow: "hidden"
+  overflow: "hidden",
+  margin: "0.5rem",
+  flexGrow: 1,
+  boxShadow: "0px 2px 8px 2px #E2E8F0"
 };
 
 const answerArea = {
   border: "none",
-  outline: "none",
   resize: "none",
-  padding: "0",
   focusBorderColor: "none",
-  fontSize: "1.2em"
+  fontSize: "1.1em",
+  backgroundColor: "gray.100",
+  marginBottom: "1rem"
 };
 
-export default function Question({ question = "eai td? ", from }) {
+const MotionBox = motion.custom(Box);
+
+function QuestionHeader({ question, from: { avatar, name, link }, onRemove }) {
+  return (
+    <>
+      <Flex height="3rem" justify="space-between">
+        <Stack isInline>
+          <Image rounded="full" height="3rem" src={avatar} />
+          <Text paddingLeft="1rem" alignSelf="center">
+            <Link data-testid="name" fontWeight="bold">
+              {name}
+            </Link>
+            {" " + i18n("asked")}
+          </Text>
+        </Stack>
+        <Box
+          as={IoIosClose}
+          size="1.5rem"
+          onClick={onRemove}
+          color="gray.500"
+        />
+      </Flex>
+      <Heading
+        as="h3"
+        data-testid="question"
+        size={question.length > 20 ? "lg" : "xl"}
+        padding="0.3rem 0"
+        margin="0"
+      >
+        {question}
+      </Heading>
+    </>
+  );
+}
+
+function AnswerTextarea({
+  onSendAnswer,
+  shouldShareOnTwitter,
+  toggleShareOnTwitter
+}) {
+  const [answer, setAnswer] = useState();
+
+  const answerFieldRef = useRef();
+  useFocusOnRender(answerFieldRef);
+
+  return (
+    <>
+      <Textarea
+        ref={answerFieldRef}
+        value={answer}
+        placeholder={i18n("write_answer")}
+        onChange={e => setAnswer(e.target.value)}
+        {...answerArea}
+      />
+      <Stack isInline isReversed spacing="1rem">
+        <Box as={FiSend} size="1.5rem" onClick={() => onSendAnswer(answer)} />
+        <Box
+          as={FaTwitter}
+          size="1.5rem"
+          color={shouldShareOnTwitter ? "#1da1f2" : "grey"}
+          onClick={toggleShareOnTwitter}
+        />
+        <Text
+          as="span"
+          color="gray.400"
+          display="inline-flex"
+          alignItems="center"
+        >
+          {i18n("tweet your answer")}
+        </Text>
+      </Stack>
+    </>
+  );
+}
+
+export default function Question({
+  question = "eai td? ",
+  from = {
+    avatar: randomDogAvatar(),
+    name: i18n("anonymous")
+  }
+}) {
   const [state, send] = useMachine(questionMachine);
 
   const boxRef = useRef();
-  useOutsideObserver(boxRef, () => send("cancel"));
+  useEventListener(
+    "pointerup",
+    e => !boxRef.current?.contains(e.target) && send("cancel")
+  );
 
-  const answerFieldRef = useFocus(state.matches("answering"), [state.value]);
-
-  const [answer, setAnswer] = useState();
-
-  function onIdleTap() {
-    if (state.matches("idle")) send("answer");
-  }
-
-  const QuestionState = {
-    idle: () => (
-      <motion.div
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onTap={onIdleTap}
-      >
-        <Box ref={boxRef} {...questionBox}>
-          <QuestionHeader from={from} />
-          <QuestionBody question={question} />
-        </Box>
-      </motion.div>
-    ),
-    answering: () => (
-      <motion.div
-        initial={{ size: 0.1 }}
-        animate={{ size: 1 }}
-        transition={{ duration: 2 }}
-      >
-        <Box ref={boxRef} {...questionBox}>
-          <QuestionHeader from={from} />
-          <QuestionBody question={question} />
-          <Textarea
-            ref={answerFieldRef}
-            value={answer}
-            placeholder={i18n("write_answer")}
-            onChange={e => setAnswer(e.target.value)}
-            {...answerArea}
-          />
-          <Stack isInline isReversed>
-            <Box
-              as={MdSend}
-              size="1.5rem"
-              color="#ffa600"
-              onClick={() => send("sendAnswer")}
-              paddingLeft="1rem"
-            />
-            <Box
-              as={FaTwitter}
-              size="1.5rem"
-              color={state.context.shouldShareOnTwitter ? "#1da1f2" : "grey"}
-              onClick={() => send("toggleShareOnTwitter")}
-            />
-          </Stack>
-        </Box>
-      </motion.div>
-    ),
-    sending: () => (
-      <Box {...questionBox}>
-        <QuestionHeader from={from} />
-        <QuestionBody question={question} />
-        <Textarea value={answer} {...answerArea} />
+  return (
+    <MotionBox
+      onTap={() => send("answer")}
+      ref={boxRef}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      {...questionBox}
+    >
+      <QuestionHeader question={question} from={from} onRemove={() => {}} />
+      {!state.matches("idle") && (
+        <AnswerTextarea
+          shouldShareOnTwitter={state.context.shouldShareOnTwitter}
+          toggleShareOnTwitter={() => send("toggleShareOnTwitter")}
+          onSendAnswer={answer => send({ type: "sendAnswer", answer })}
+        />
+      )}
+      {state.matches("sending") && (
         <Progress hasStripe color="orange" value={64} margin="-1rem" />
-      </Box>
-    ),
-    success: () => (
-      <motion.div animate={{ opacity: 0 }} transition={{ duration: 1 }}>
-        <Box {...questionBox}>
-          <QuestionHeader from={from} />
-          <QuestionBody question={question} />
-          <Textarea value={answer} {...answerArea} />
-        </Box>
-      </motion.div>
-    ),
-    failure: () => (
-      <Box {...questionBox} ref={boxRef}>
-        <FailureMessage />
-      </Box>
-    )
-  }[state.value];
-
-  return <QuestionState />;
+      )}
+    </MotionBox>
+  );
 }

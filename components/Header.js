@@ -1,53 +1,40 @@
+import React from "react";
 import i18n from "utils/i18n";
+import { Tag, Image, Text, Flex } from "@chakra-ui/core";
 
-function Logo({ size }) {
+export default function Header({ notAnsweredCount, profilePicSrc }) {
   return (
-    <>
-      <img src="/cdn/002-bulldog.svg"></img>
-      <style jsx>{`
-        img {
-          height: ${size};
-        }
-      `}</style>
-    </>
-  );
-}
-
-function NotAnsweredCount({ count }) {
-  return (
-    <div>
-      {i18n("to_answer", count)}
-      <style jsx>{`
-        div {
-          border-radius: 30px;
-          background-color: #f2f2f2;
-          padding: 0.4rem 0.8rem;
-          width: fit-content;
-          font-size: 0.9em;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-export default function Header({ notAnsweredCount = 0 }) {
-  return (
-    <div>
-      <Logo size="3rem" />
-      <br />
-      <NotAnsweredCount count={notAnsweredCount} />
-      <style jsx>{`
-        div {
-          padding: 1.5rem 2rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          align-items: center;
-        }
-        br {
-          height: 1rem;
-        }
-      `}</style>
-    </div>
+    <Flex
+      align="center"
+      justify="space-between"
+      height="4rem"
+      padding="1rem"
+      borderBottom="1px solid"
+      borderBottomColor="gray.200"
+    >
+      <Flex align="center">
+        <Image
+          data-testid="logo"
+          src="/cdn/002-bulldog.svg"
+          height="2rem"
+          width="2rem"
+          marginRight="1rem"
+        />
+        {!!notAnsweredCount && (
+          <Tag size="sm">
+            <Text lineHeight="0" data-testid="toAnswerCount">
+              {i18n("not answered", notAnsweredCount)}
+            </Text>
+          </Tag>
+        )}
+      </Flex>
+      <Image
+        height="2.5rem"
+        width="2.5rem"
+        rounded="full"
+        border="4px solid peachpuff"
+        src={profilePicSrc}
+      />
+    </Flex>
   );
 }
