@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { FaTwitter } from "react-icons/fa";
 import { Box, Stack, Heading, Text, Button } from "@chakra-ui/core";
 
-import i18n from "utils/i18n";
+import i18n from "lib/i18n";
 
 export default function ShareYourProfile({ tweetProfile }) {
   return (
@@ -14,6 +14,7 @@ export default function ShareYourProfile({ tweetProfile }) {
       margin="0.5rem"
       flexGrow={1}
       align="center"
+      maxWidth="xl"
     >
       <Heading size="lg" margin="0">
         {i18n("you dont have any questions")}

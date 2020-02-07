@@ -1,13 +1,10 @@
 # curious-dog
 
-### run local
+### run
 
 `now dev`
 
-### unit test
+### to test locally
 
-`nodemon --exec yarn test`
-
-### functional test
-
-`yarn testui`
+firebase admin config goes in ./curiousdog-test-firebase.json
+then `yarn test`

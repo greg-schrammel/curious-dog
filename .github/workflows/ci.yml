@@ -1,0 +1,36 @@
+name: test
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [8.x, 10.x, 12.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: sh .github/scripts/decrypt_secret.sh ${{ secrets.FIREBASE_TEST_CONFIG_ENCKEY }} ./curiousdog-test-firebase.json.gpg ./curiousdog-test-firebase.json
+      - run: npm install
+      - run: npm test
+        env:
+          CI: true
+  deploy:
+    name: Deploy
+    needs: test
+    if: github.ref == 'refs/heads/master' # only runs on master
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@master
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_PATH: ./firebase

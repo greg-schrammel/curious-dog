@@ -1,8 +1,32 @@
-import React from "react";
-import i18n from "utils/i18n";
-import { Tag, Image, Text, Flex } from "@chakra-ui/core";
+import React, { useState } from 'react';
+import i18n from 'lib/i18n';
+import { Tag, Image, Flex, Menu, MenuButton, MenuList, MenuItem, MenuGroup } from '@chakra-ui/core';
 
-export default function Header({ notAnsweredCount, profilePicSrc }) {
+import { LoginWithTwitter } from 'components/Login';
+
+function ProfileMenu({ profilePicSrc, userId }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Menu isOpen={isOpen}>
+      <MenuButton
+        as={Image}
+        src={profilePicSrc}
+        onClick={() => setIsOpen(!isOpen)}
+        height="2.5rem"
+        width="2.5rem"
+        rounded="full"
+        border="4px solid peachpuff"
+      />
+      <MenuList>
+        <MenuGroup title="Profile">
+          <MenuItem>Meu perfil</MenuItem>
+        </MenuGroup>
+      </MenuList>
+    </Menu>
+  );
+}
+
+export default function Header({ loggedUser }) {
   return (
     <Flex
       align="center"
@@ -20,21 +44,11 @@ export default function Header({ notAnsweredCount, profilePicSrc }) {
           width="2rem"
           marginRight="1rem"
         />
-        {!!notAnsweredCount && (
-          <Tag size="sm">
-            <Text lineHeight="0" data-testid="toAnswerCount">
-              {i18n("not answered", notAnsweredCount)}
-            </Text>
-          </Tag>
+        {!!loggedUser.unanswered_count && (
+          <Tag size="sm">{i18n('not answered', loggedUser.unanswered_count)}</Tag>
         )}
       </Flex>
-      <Image
-        height="2.5rem"
-        width="2.5rem"
-        rounded="full"
-        border="4px solid peachpuff"
-        src={profilePicSrc}
-      />
+      {!!loggedUser ? <LoginWithTwitter /> : <ProfileMenu src={photoURL} userId={userId} />}
     </Flex>
   );
 }
