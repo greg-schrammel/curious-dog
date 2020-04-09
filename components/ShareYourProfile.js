@@ -1,9 +1,8 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { FaTwitter } from "react-icons/fa";
-import { Box, Stack, Heading, Text, Button } from "@chakra-ui/core";
+import React from 'react';
+import { FaTwitter } from 'react-icons/fa';
+import { Box, Stack, Heading, Text, Button } from '@chakra-ui/core';
 
-import i18n from "lib/i18n";
+import i18n from 'lib/i18n';
 
 export default function ShareYourProfile({ tweetProfile }) {
   return (
@@ -17,13 +16,13 @@ export default function ShareYourProfile({ tweetProfile }) {
       maxWidth="xl"
     >
       <Heading size="lg" margin="0">
-        {i18n("you dont have any questions")}
+        {i18n('you dont have any questions')}
       </Heading>
       <Text margin="0" fontSize="3rem">
         😔😭😭😢😭
       </Text>
       <Heading size="sm" color="gray.600" margin="0">
-        {i18n("maybe sharing your profile will help")}
+        {i18n('maybe sharing your profile will help')}
       </Heading>
       <Button
         marginTop="0.5rem"

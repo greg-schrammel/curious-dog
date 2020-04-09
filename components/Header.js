@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
-import i18n from 'lib/i18n';
-import { Tag, Image, Flex, Menu, MenuButton, MenuList, MenuItem, MenuGroup } from '@chakra-ui/core';
+import React, { useState } from "react";
+import i18n from "lib/i18n";
+import {
+  Tag,
+  Image,
+  Flex,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuGroup,
+} from "@chakra-ui/core";
 
-import { LoginWithTwitter } from 'components/Login';
+import { LoginWithTwitter } from "components/Login";
 
 function ProfileMenu({ profilePicSrc, userId }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,16 +48,22 @@ export default function Header({ loggedUser }) {
       <Flex align="center">
         <Image
           data-testid="logo"
-          src="/cdn/002-bulldog.svg"
+          src="/assets/dogs/002-bulldog.svg"
           height="2rem"
           width="2rem"
           marginRight="1rem"
         />
-        {!!loggedUser.unanswered_count && (
-          <Tag size="sm">{i18n('not answered', loggedUser.unanswered_count)}</Tag>
+        {!!loggedUser?.unanswered_count && (
+          <Tag size="sm">
+            {i18n("not answered", loggedUser.unanswered_count)}
+          </Tag>
         )}
       </Flex>
-      {!!loggedUser ? <LoginWithTwitter /> : <ProfileMenu src={photoURL} userId={userId} />}
+      {!!loggedUser ? (
+        <ProfileMenu src={photoURL} userId={userId} />
+      ) : (
+        <LoginWithTwitter />
+      )}
     </Flex>
   );
 }

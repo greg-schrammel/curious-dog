@@ -1,7 +1,7 @@
 import React from 'react';
 import { Flex, Text, Image, Box, Textarea, Button } from '@chakra-ui/core';
 
-function QuestionsList({ questions }) {
+export function QuestionsList({ questions }) {
   return (
     <>
       <Heading as="h5" size="sm" marginTop="1rem">
@@ -16,7 +16,7 @@ function QuestionsList({ questions }) {
   );
 }
 
-function AskField({ onSubmit }) {
+export function AskField({ onSubmit }) {
   const [question, setQuestion] = useState('');
   return (
     <Box>
@@ -49,7 +49,7 @@ function AskField({ onSubmit }) {
   );
 }
 
-function UserInfo({ displayName, userName, photoURL }) {
+export function UserInfo({ displayName, userName, photoURL }) {
   return (
     <Flex align="center" justify="space-between" marginBottom="2rem">
       <Flex direction="column">
@@ -66,20 +66,5 @@ function UserInfo({ displayName, userName, photoURL }) {
         src={photoURL}
       />
     </Flex>
-  );
-}
-
-function Feed() {}
-
-export default function UserProfile({ user, onAsk, questions }) {
-  return (
-    <>
-      <Box maxWidth="md" justifySelf="center">
-        <UserInfo user={user} />
-        <AskField onAsk={onAsk} />
-        <ShareYourProfile />
-      </Box>
-      <QuestionsList questions={questions} />
-    </>
   );
 }

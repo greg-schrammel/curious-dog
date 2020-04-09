@@ -1,0 +1,26 @@
+{
+  "scripts": {
+    "deploy": "firebase deploy",
+    "test": "FIRESTORE_EMULATOR_HOST=localhost:8080 GCLOUD_PROJECT=curiousdog-test FIREBASE_CONFIG=$(<./curiousdog-test-firebase.json) firebase emulators:exec --only firestore 'yarn test:firebase'",
+    "test:firebase": "riteway **/*.test.js | tap-nirvana"
+  },
+  "dependencies": {
+    "@babel/node": "^7.8.3",
+    "@babel/polyfill": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
+    "@babel/register": "^7.8.3",
+    "@firebase/testing": "^0.16.8",
+    "babel-loader": "^8.0.6",
+    "firebase": "^7.7.0",
+    "firebase-admin": "^8.9.2",
+    "firebase-functions": "^3.3.0",
+    "firebase-functions-test": "^0.1.7",
+    "firebase-tools": "^8.4.1",
+    "riteway": "^6.1.1",
+    "tap-nirvana": "^1.1.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.3",
+    "@babel/core": "^7.8.3"
+  }
+}

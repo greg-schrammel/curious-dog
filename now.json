@@ -1,27 +1,5 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "cdn/*", "use": "@now/static" },
-    { "src": "next.config.js", "use": "@now/next" }
-  ],
-  "routes": [
-    {
-      "src": "^/service-worker.js$",
-      "dest": "/_next/static/service-worker.js",
-      "headers": {
-        "cache-control": "public, max-age=43200, immutable",
-        "Service-Worker-Allowed": "/"
-      }
-    },
-    {
-      "src": "^/sw.js$",
-      "dest": "/_next/static/sw.js",
-      "headers": {
-        "cache-control": "public, max-age=43200, immutable",
-        "Service-Worker-Allowed": "/"
-      }
-    }
-  ],
+  "routes": [{ "src": "/u/(?<userId>[^/]+)", "dest": "/u?userId=$userId" }],
   "env": {
     "FIREBASE_CONFIG": "@curiousdog-firebase_config",
     "GCLOUD_PROJECT": "curiousdog-5b875"

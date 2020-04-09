@@ -1,16 +1,26 @@
-import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { FaTwitter } from 'react-icons/fa';
-import { FiSend } from 'react-icons/fi';
-import { IoIosClose } from 'react-icons/io';
-import { Image, Box, Textarea, Stack, Heading, Text, Link, Flex } from '@chakra-ui/core';
+import React, { useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { FaTwitter } from "react-icons/fa";
+import { FiSend } from "react-icons/fi";
+import { IoIosClose } from "react-icons/io";
+import {
+  Button,
+  Image,
+  Box,
+  Textarea,
+  Stack,
+  Heading,
+  Text,
+  Link,
+  Flex,
+} from "@chakra-ui/core";
 
-import useEventListener from '@use-it/event-listener';
+import useEventListener from "@use-it/event-listener";
 
-import i18n from 'lib/i18n';
+import i18n from "lib/i18n";
 
 function randomDogAvatar() {
-  return '/cdn/008-corgi.svg';
+  return "/assets/dogs/008-corgi.svg";
 }
 
 function sendAnswer() {
@@ -18,33 +28,33 @@ function sendAnswer() {
 }
 
 const questionBox = {
-  rounded: 'lg',
-  backgroundColor: 'white',
-  padding: '1rem',
-  overflow: 'hidden',
-  margin: '0.5rem',
+  rounded: "lg",
+  backgroundColor: "white",
+  padding: "1rem",
+  overflow: "hidden",
+  margin: "0.5rem",
   flexGrow: 1,
-  boxShadow: '0px 2px 8px 2px #E2E8F0',
-  maxWidth: 'sm',
-  w: 'xs'
+  boxShadow: "0px 2px 8px 2px #E2E8F0",
+  maxWidth: "sm",
+  w: "xs",
 };
 
 const answerArea = {
-  border: 'none',
-  resize: 'none',
-  focusBorderColor: 'none',
-  fontSize: '1.1em',
-  backgroundColor: 'gray.100',
-  marginBottom: '1rem'
+  border: "none",
+  resize: "none",
+  focusBorderColor: "none",
+  fontSize: "1.1em",
+  backgroundColor: "gray.100",
+  marginBottom: "1rem",
 };
 
 const MotionBox = motion.custom(Box);
 
-const QuestionText = question => (
+const QuestionText = (question) => (
   <Heading
     as="h3"
     data-testid="question"
-    size={question.length > 20 ? 'lg' : 'xl'}
+    size={question.length > 20 ? "lg" : "xl"}
     padding="0.3rem 0"
     margin="0"
   >
@@ -56,7 +66,11 @@ const DeleteButton = ({ onClick }) => (
   <Box as={IoIosClose} size="1.5rem" onClick={onClick} color="gray.500" />
 );
 
-function QuestionHeader({ question, from: { avatar, name }, onDeleteQuestion }) {
+function QuestionHeader({
+  question,
+  from: { avatar, name },
+  onDeleteQuestion,
+}) {
   return (
     <>
       <Flex height="3rem" justify="space-between">
@@ -66,7 +80,7 @@ function QuestionHeader({ question, from: { avatar, name }, onDeleteQuestion }) 
             <Link data-testid="name" fontWeight="bold">
               {name}
             </Link>
-            {' ' + i18n('asked')}
+            {" " + i18n("asked")}
           </Text>
         </Stack>
         <DeleteButton onClick={onDeleteQuestion} />
@@ -80,10 +94,14 @@ const TwitterIcon = ({ onClick, isActive }) => (
   <Box as={FaTwitter} size="1.5rem" color={isActive} onClick={onClick} />
 );
 
-const SendButton = ({ onClick }) => <Box as={FiSend} size="1.5rem" onClick={onClick} />;
+const SendButton = ({ onClick }) => (
+  <Button rounded="lg" onClick={onClick}>
+    Enviar
+  </Button>
+);
 
 function AnswerTextarea({ onSendAnswer }) {
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState("");
   const [shouldShareOnTwitter, setSharingOnTwitter] = useState(true);
 
   const answerFieldRef = useRef();
@@ -96,18 +114,25 @@ function AnswerTextarea({ onSendAnswer }) {
       <Textarea
         ref={answerFieldRef}
         value={answer}
-        placeholder={i18n('write_answer')}
-        onChange={e => setAnswer(e.target.value)}
+        placeholder={i18n("write_answer")}
+        onChange={(e) => setAnswer(e.target.value)}
         {...answerArea}
       />
       <Stack isInline isReversed spacing="1rem">
-        <SendButton onClick={() => onSendAnswer(answer, shouldShareOnTwitter)} />
+        <SendButton
+          onClick={() => onSendAnswer(answer, shouldShareOnTwitter)}
+        />
         <TwitterIcon
           onClick={() => setSharingOnTwitter(!shouldShareOnTwitter)}
           isActive={shouldShareOnTwitter}
         />
-        <Text as="span" color="gray.400" display="inline-flex" alignItems="center">
-          {i18n('tweet your answer')}
+        <Text
+          as="span"
+          color="gray.400"
+          display="inline-flex"
+          alignItems="center"
+        >
+          {i18n("tweet your answer")}
         </Text>
       </Stack>
     </>
@@ -118,13 +143,13 @@ export default function Question({
   question,
   from = {
     avatar: randomDogAvatar(),
-    name: i18n('anonymous')
-  }
+    name: i18n("anonymous"),
+  },
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const boxRef = useRef();
-  useEventListener('pointerup', e => {
+  useEventListener("pointerup", (e) => {
     if (!boxRef.current?.contains(e.target)) setShowingAnswerField(false);
   });
 
@@ -137,7 +162,9 @@ export default function Question({
       {...questionBox}
     >
       <QuestionHeader question={question} from={from} onRemove={() => {}} />
-      {isOpen && <AnswerTextarea onSendAnswer={answer => sendAnswer(answer)} />}
+      {isOpen && (
+        <AnswerTextarea onSendAnswer={(answer) => sendAnswer(answer)} />
+      )}
     </MotionBox>
   );
 }

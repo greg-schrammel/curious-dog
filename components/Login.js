@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   Button,
   ModalOverlay,
@@ -6,50 +6,50 @@ import {
   ModalContent,
   ModalHeader,
   ModalFooter,
-  ModalCloseButton
-} from '@chakra-ui/core';
-import { FaTwitter } from 'react-icons/fa';
+  ModalCloseButton,
+} from "@chakra-ui/core";
+import { FaTwitter } from "react-icons/fa";
 
-import { Machine, sendParent } from 'xstate';
-import { useMachine } from 'lib/useMachine';
+import { Machine, sendParent } from "xstate";
+import { useMachine } from "@xstate/react";
 
-import { loginWithTwitter } from 'lib/auth';
+import { loginWithTwitter } from "lib/auth";
 
 const loginMachine = Machine({
-  id: 'login',
-  initial: 'idle',
+  id: "login",
+  initial: "idle",
   states: {
     idle: {
       on: {
-        start: 'loading'
-      }
+        start: "loading",
+      },
     },
     loading: {
       invoke: {
-        src: 'login',
+        src: "login",
         onDone: {
-          target: 'completed',
-          actions: sendParent('userLogin', { user: (_ctx, e) => e })
+          target: "completed",
+          actions: sendParent("userLogin", { user: (_ctx, e) => e }),
         },
-        onError: 'failed'
-      }
+        onError: "failed",
+      },
     },
     failed: {
-      initial: 'showingError',
+      initial: "showingError",
       states: {
         showingError: {},
-        hiddenError: {}
+        hiddenError: {},
       },
       on: {
-        start: 'loading',
-        hideError: 'failed.hiddenError',
-        showError: 'failed.showingError'
-      }
+        start: "loading",
+        hideError: "failed.hiddenError",
+        showError: "failed.showingError",
+      },
     },
     completed: {
-      type: 'final'
-    }
-  }
+      type: "final",
+    },
+  },
 });
 
 function TwitterButton({ children, onClick, isLoading }) {
@@ -71,21 +71,30 @@ function TwitterButton({ children, onClick, isLoading }) {
 export function LoginWithTwitter() {
   const [state, send] = useMachine(loginMachine, {
     services: {
-      login: () => loginWithTwitter(twitterProvider)
-    }
+      login: () => loginWithTwitter(),
+    },
   });
   return (
     <>
-      <TwitterButton onClick={() => send('start')} isLoading={state.matches('loading')}>
+      <TwitterButton
+        onClick={() => send("start")}
+        isLoading={state.matches("loading")}
+      >
         Entrar
       </TwitterButton>
-      <Modal onClose={() => send('hideError')} isOpen={state.matches('failed.showingError')}>
+      <Modal
+        onClose={() => send("hideError")}
+        isOpen={state.matches("failed.showingError")}
+      >
         <ModalOverlay />
         <ModalContent rounded="lg" width="80%">
           <ModalHeader>Deu algo errado</ModalHeader>
           <ModalCloseButton />
           <ModalFooter>
-            <TwitterButton onClick={() => send('start')} isLoading={state.matches('loading')}>
+            <TwitterButton
+              onClick={() => send("start")}
+              isLoading={state.matches("loading")}
+            >
               Tentar dnv
             </TwitterButton>
           </ModalFooter>
