@@ -1,4 +1,4 @@
-name: test
+name: firebase
 
 on: push
 
@@ -7,16 +7,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [8.x, 10.x, 12.x]
+        node-version: [10.x, 12.x]
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - run: sh .github/scripts/decrypt_secret.sh ${{ secrets.FIREBASE_TEST_CONFIG_ENCKEY }} ./curiousdog-test-firebase.json.gpg ./curiousdog-test-firebase.json
-      - run: npm install
-      - run: npm test
+      - run: npm install -g yarn
+      - run: sh .github/scripts/decrypt_secret.sh ${{ secrets.FIREBASE_TEST_CONFIG_ENCKEY }} ./firebase/curiousdog-test-firebase.json.gpg ./firebase/curiousdog-test-firebase.json
+      - run: yarn install
+      - run: yarn workspace firebase test
         env:
           CI: true
   deploy:

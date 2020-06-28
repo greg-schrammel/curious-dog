@@ -23,10 +23,10 @@ const makeFirestoreInstance = async (auth, data) => {
   return firestore;
 };
 
-const isDenied = async (fn, ...args) =>
+const isAllowed = async (fn, ...args) =>
   fn(...args)
-    .then(() => false)
-    .catch(() => true);
+    .then(() => true)
+    .catch(() => false);
 
 describe("Users Rules", async (assert) => {
   {
@@ -37,15 +37,15 @@ describe("Users Rules", async (assert) => {
     assert({
       given: "list users",
       should: "allow",
-      actual: await isDenied(listUsers),
-      expected: false,
+      actual: await isAllowed(listUsers),
+      expected: true,
     });
 
     assert({
       given: "create a user",
       should: "allow",
-      actual: await isDenied(createUser),
-      expected: false,
+      actual: await isAllowed(createUser),
+      expected: true,
     });
   }
   {
@@ -56,155 +56,125 @@ describe("Users Rules", async (assert) => {
       { [`users/${someUserId}`]: {}, [`users/${authUserId}`]: {} }
     );
     const updateUser = (uid) =>
-      firestore
-        .collection("users")
-        .doc(uid)
-        .update({ displayName: "dsada" });
+      firestore.collection("users").doc(uid).update({ displayName: "dsada" });
 
     assert({
       given: "write to a user diferent from auth",
       should: "not allow",
-      actual: await isDenied(updateUser, someUserId),
-      expected: true,
+      actual: await isAllowed(updateUser, someUserId),
+      expected: false,
     });
     assert({
       given: "write to same user of auth",
       should: "allow",
-      actual: await isDenied(updateUser, authUserId),
-      expected: false,
+      actual: await isAllowed(updateUser, authUserId),
+      expected: true,
     });
   }
 });
 
-describe("Questions Rules", async (assert) => {
-  const id_of_someQuestion = "id_of_someQuestion";
-  const id_of_questionWithAddressee = "id_of_questionWithAddressee";
-  const id_of_questionWithAnswer = "id_of_questionWithAnswer";
+describe("Messages Rules", async (assert) => {
+  const idOfSomeMessage = "idOfSomeMessage";
+  const idOfMessageToAuthUser = "idOfMessageToAuthUser";
+  const idOfMessageWithReply = "idOfMessageWithReply";
+  const idOfMessageWithReplyAndToAuthUser = "idOfMessageWithReplyAndToAuthUser";
   const authUserId = "authUserId";
-  {
-    const firestore = await makeFirestoreInstance(
-      { uid: authUserId },
-      {
-        [`questions/${id_of_questionWithAddressee}`]: {
-          to: authUserId,
-          hasAnswer: false,
-        },
-        [`questions/${id_of_someQuestion}`]: { hasAnswer: false },
-        [`questions/${id_of_questionWithAnswer}`]: { hasAnswer: true },
-      }
-    );
 
-    const questionsCollection = firestore.collection("questions");
-    const createQuestion = () => questionsCollection.add({});
-    const updateQuestion = (id) =>
-      questionsCollection.doc(id).update({ to: "dsada" });
-    const deleteQuestion = (id) => questionsCollection.doc(id).delete();
-    const getQuestion = (id) => questionsCollection.doc(id).get();
-
-    assert({
-      given: "read a question not answered and not for the auth user",
-      should: "not allow",
-      actual: await isDenied(getQuestion, id_of_someQuestion),
-      expected: true,
-    });
-    assert({
-      given: "read a question answered and not for the auth user",
-      should: "allow",
-      actual: await isDenied(getQuestion, id_of_questionWithAnswer),
-      expected: false,
-    });
-    assert({
-      given: "read a question not answered but for the auth user",
-      should: "allow",
-      actual: await isDenied(getQuestion, id_of_questionWithAddressee),
-      expected: false,
-    });
-    assert({
-      given: "create a question",
-      should: "allow",
-      actual: await isDenied(createQuestion),
-      expected: false,
-    });
-    assert({
-      given: "update question",
-      should: "not allow",
-      actual: await isDenied(updateQuestion, id_of_someQuestion),
-      expected: true,
-    });
-    assert({
-      given: "delete question",
-      should: "not allow",
-      actual: await isDenied(deleteQuestion, id_of_someQuestion),
-      expected: true,
-    });
-    assert({
-      given: "delete question with auth as addressee",
-      should: "allow",
-      actual: await isDenied(deleteQuestion, id_of_questionWithAddressee),
-      expected: false,
-    });
-  }
-  {
-    const userId = "greg";
-    const questionsCollection = (
-      await makeFirestoreInstance(
-        { uid: "adasdas" },
-        {
-          [`questions/${id_of_someQuestion}`]: {
-            to: userId,
-            hasAnswer: false,
-          },
-          [`questions/${id_of_someQuestion + "adsad"}`]: {
-            to: userId,
-            hasAnswer: false,
-          },
-        }
-      )
-    ).collection("questions");
-
-    const query = (to) =>
-      questionsCollection
-        .where("to", "==", to)
-        .where("hasAnswer", "==", true)
-        .get();
-
-    assert({
-      given: "get when there is no question answered and its not the addressee",
-      should: "allow",
-      actual: await isDenied(query, userId),
-      expected: false,
-    });
-  }
-});
-
-describe("Answers Rules", async (assert) => {
-  const authUserId = "someUserId";
-  const questionToAuthUserId = "questionToAuthUserId";
-
+  const makeValidMessage = (msg) => ({ to: "sdad", body: "dsad", ...msg });
   const firestore = await makeFirestoreInstance(
     { uid: authUserId },
-    { [`questions/${questionToAuthUserId}`]: { to: authUserId } }
+    {
+      [`messages/${idOfMessageToAuthUser}`]: makeValidMessage({
+        to: authUserId,
+        reply: null,
+      }),
+      [`messages/${idOfSomeMessage}`]: makeValidMessage(),
+      [`messages/${idOfMessageWithReply}`]: makeValidMessage({
+        reply: { body: "dasdasd" },
+      }),
+      [`messages/${idOfMessageWithReplyAndToAuthUser}`]: makeValidMessage({
+        reply: { body: "dasdasd" },
+        to: authUserId,
+      }),
+    }
   );
 
-  const listAnswers = () => firestore.collection("answers").get();
-  const createAnswer = () => firestore.collection("answers").add({});
+  const messagesCollection = firestore.collection("messages");
+  const createMessage = (msg) => messagesCollection.add(msg);
+  const updateMessageBody = (id) =>
+    messagesCollection.doc(id).update({ body: "dsada" });
+  const updateMessageReply = (id) =>
+    messagesCollection.doc(id).update({ reply: { body: "aaaa" } });
+  const deleteMessage = (id) => messagesCollection.doc(id).delete();
+  const getMessage = (id) => messagesCollection.doc(id).get();
 
   assert({
-    given: "list answers",
-    should: "allow",
-    actual: await isDenied(listAnswers),
+    given: "read a message not replied and not for the auth user",
+    should: "not allow",
+    actual: await isAllowed(getMessage, idOfSomeMessage),
     expected: false,
   });
   assert({
-    given: "create answer for question to auth user",
+    given: "read a message replied and not for the auth user",
     should: "allow",
-    actual: await isDenied(createAnswer, { question: questionToAuthUserId }),
+    actual: await isAllowed(getMessage, idOfMessageWithReply),
     expected: true,
   });
   assert({
-    given: "create answer for question NOT to auth user",
-    should: "NOT allow",
-    actual: await isDenied(createAnswer),
+    given: "read a message not replied but for the auth user",
+    should: "allow",
+    actual: await isAllowed(getMessage, idOfMessageToAuthUser),
+    expected: true,
+  });
+  assert({
+    given: "create a message with body and to",
+    should: "allow",
+    actual: await isAllowed(createMessage, makeValidMessage()),
+    expected: true,
+  });
+  assert({
+    given: "create a message without body",
+    should: "not allow",
+    actual: await isAllowed(createMessage, { to: "dasdas" }),
+    expected: false,
+  });
+  assert({
+    given: "update message body",
+    should: "not allow",
+    actual: await isAllowed(updateMessageBody, idOfSomeMessage),
+    expected: false,
+  });
+  assert({
+    given: "add reply to message to you",
+    should: "allow",
+    actual: await isAllowed(updateMessageReply, idOfMessageToAuthUser),
+    expected: true,
+  });
+  assert({
+    given: "add reply to message not to you",
+    should: "not allow",
+    actual: await isAllowed(updateMessageReply, idOfSomeMessage),
+    expected: false,
+  });
+  assert({
+    given: "change message reply",
+    should: "not allow",
+    actual: await isAllowed(
+      updateMessageReply,
+      idOfMessageWithReplyAndToAuthUser
+    ),
+    expected: false,
+  });
+  assert({
+    given: "delete message not for you",
+    should: "not allow",
+    actual: await isAllowed(deleteMessage, idOfSomeMessage),
+    expected: false,
+  });
+  assert({
+    given: "delete message for you",
+    should: "allow",
+    actual: await isAllowed(deleteMessage, idOfMessageToAuthUser),
     expected: true,
   });
 });

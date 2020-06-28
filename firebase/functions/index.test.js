@@ -1,13 +1,7 @@
 const { describe } = require("riteway");
 const firebaseFunctionsTest = require("firebase-functions-test");
 const admin = require("firebase-admin");
-const {
-  onCreateQuestion,
-  onDeleteQuestion,
-  onCreateAnswer,
-  onDeleteAnswer,
-  onCreateUser,
-} = require("./");
+const { onCreateMessage, onDeleteMessage, onCreateUser } = require(".");
 
 const test = firebaseFunctionsTest(
   {
@@ -22,128 +16,58 @@ const app = admin.apps[0] || admin.initializeApp();
 const firestore = app.firestore();
 
 const usersCollection = firestore.collection("users");
-const answersCollection = firestore.collection("answers");
-const questionsCollection = firestore.collection("questions");
+const messagesCollection = firestore.collection("messages");
 
 const createUser = (user = {}) => usersCollection.add(user);
-const createAnswer = (answer = {}) => answersCollection.add(answer);
-const createQuestion = (question = {}) => questionsCollection.add(question);
 
-// Question
-describe("onCreateQuestion", async (assert) => {
-  const wrapped = test.wrap(onCreateQuestion);
+// Message
+describe("onCreateMessage", async (assert) => {
+  const wrapped = test.wrap(onCreateMessage);
 
-  const user = { unanswered_count: 0, displayName: "namenamename" };
-
+  const user = { unrepliedCount: 0, displayName: "namenamename" };
   const userId = (await createUser(user)).id;
-  const questionSnap = test.firestore.makeDocumentSnapshot(
-    { to: userId },
-    `questions/someQuestionId`
+
+  const message = { to: userId, body: "asda" };
+  const messageId = "someMessageId";
+
+  const messageSnap = test.firestore.makeDocumentSnapshot(
+    message,
+    `messages/${messageId}`
   );
 
-  await wrapped(questionSnap);
+  await wrapped(messageSnap);
+
   const actualUser = await usersCollection.doc(userId).get();
 
   assert({
-    given: "a question to a user",
-    should: "increment user unanswered_count",
+    given: "a message to a user",
+    should: "increment user unrepliedCount",
     actual: actualUser.data(),
-    expected: { ...user, unanswered_count: user.unanswered_count + 1 },
+    expected: { ...user, unrepliedCount: user.unrepliedCount + 1 },
   });
 });
 
-describe("onDeleteQuestion", async (assert) => {
-  const wrapped = test.wrap(onDeleteQuestion);
+describe("onDeleteMessage", async (assert) => {
+  const deleteMessage = test.wrap(onDeleteMessage);
 
-  const user = { unanswered_count: 3, displayName: "namenamename" };
+  const user = { unrepliedCount: 3, displayName: "namenamename" };
+  const messageId = "someMessageId";
 
   const userId = (await createUser(user)).id;
-  const questionSnap = test.firestore.makeDocumentSnapshot(
-    { to: userId },
-    `questions/someQuestionId`
+
+  const messageSnap = test.firestore.makeDocumentSnapshot(
+    { to: userId, body: "sads", reply: null },
+    `messages/${messageId}`
   );
 
-  await wrapped(questionSnap);
+  await deleteMessage(messageSnap);
   const actualUser = await usersCollection.doc(userId).get();
 
   assert({
-    given: "a user question was deleted",
-    should: "decrement user unanswered_count",
+    given: "a message was deleted",
+    should: "decrement user unrepliedCount",
     actual: actualUser.data(),
-    expected: { ...user, unanswered_count: user.unanswered_count - 1 },
-  });
-});
-
-// Answer
-describe("onCreateAnswer", async (assert) => {
-  const wrapped = test.wrap(onCreateAnswer);
-
-  const user = { unanswered_count: 42, displayName: "namenamename" };
-
-  const userId = (await createUser(user)).id;
-  const questionId = (await createQuestion()).id;
-  const answer = await createAnswer({
-    answer: "asdasd",
-    question: questionId,
-  });
-
-  await wrapped(await answer.get(), {
-    auth: { uid: userId },
-  });
-
-  assert({
-    given: "a new answer",
-    should: "set the answer 'by' to the current authenticated user id",
-    actual: (await answersCollection.doc(answer.id).get()).get("by"),
-    expected: userId,
-  });
-  assert({
-    given: "a new answer",
-    should: "set its question 'hasAnswer' to true",
-    actual: (await questionsCollection.doc(questionId).get()).get("hasAnswer"),
-    expected: true,
-  });
-  assert({
-    given: "a new answer",
-    should: "increment unanswered_count from user who answered it",
-    actual: (await usersCollection.doc(userId).get()).data(),
-    expected: { ...user, unanswered_count: user.unanswered_count + 1 },
-  });
-
-  // assert({
-  //   given: "the question was not for the current authenticated user",
-  //   should: "fail to create the answer",
-  //   actual:
-  //   expected:
-  // });
-});
-
-describe("onDeleteAnswer", async (assert) => {
-  const wrapped = test.wrap(onDeleteAnswer);
-
-  const user = { unanswered_count: 1002, displayName: "namenamename" };
-
-  const questionId = (await createQuestion()).id;
-  const userId = (await createUser(user)).id;
-
-  const answerSnap = test.firestore.makeDocumentSnapshot(
-    { by: userId, question: questionId },
-    `answer/someAnswerId`
-  );
-
-  await wrapped(answerSnap);
-
-  assert({
-    given: "an answer was deleted",
-    should: "decrement user unanswered_count from who answered it",
-    actual: (await usersCollection.doc(userId).get()).data(),
-    expected: { ...user, unanswered_count: user.unanswered_count - 1 },
-  });
-  assert({
-    given: "an answer was deleted",
-    should: "set its question hasAnswer back to false",
-    actual: (await questionsCollection.doc(questionId).get()).get("hasAnswer"),
-    expected: false,
+    expected: { ...user, unrepliedCount: user.unrepliedCount - 1 },
   });
 });
 
@@ -156,12 +80,14 @@ describe("onCreateUser", async (assert) => {
 
   const actualUser = await usersCollection.doc(authUser.uid).get();
 
-  assert({
-    given: "a auth user",
-    should: "create a document with auth user uid and info",
-    actual: actualUser.exists,
-    expected: true,
-  });
+  // assert({
+  //   given: "a auth user",
+  //   should: "create a document with auth user uid and info",
+  //   actual: actualUser,
+  //   expected: {
+  //     authUser:
+  //   },
+  // });
   assert({
     given: "a auth user",
     should: "create a document with auth user uid and info",

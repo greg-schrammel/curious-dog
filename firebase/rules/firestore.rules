@@ -9,26 +9,43 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId
     	allow read, create: if true;
     }
-    match /questions/{questionId} {
-      allow write: if false;
-      allow create: if true;
-      allow read: if resource.data.hasAnswer == true || request.auth.uid == resource.data.to;
-      allow delete: if request.auth.uid == resource.data.to;
-    }
-    match /answers/{answerId} {
-      allow read: if true;
-      // you can only answer questions asked to you
-      allow write: if getQuestionData(resource.data.question).to == request.auth.uid
-    }
+    match /messages/{messageId} {
+      allow create: if isBodyValid() && isToSomeone();
+      allow read: if isToAuthUser() || hasReply();
+      allow update: if isToAuthUser() && hasReply() == false && isUpdateValid();
+      allow delete: if isToAuthUser();
 
-    // Question
-    function getQuestionData(questionId) {
-      return getData('questions', questionId);
-    }
+      function isBodyValid() {
+        return "body" in request.resource.data && 
+          request.resource.data.body is string && 
+          request.resource.data.body.size() > 0 &&
+          request.resource.data.body.size() < 200
+      }
 
-    // Util
-    function getData(collection, documentId) {
-      return get(/databases/$(database)/documents/$(collection)/$(documentId)).data;
+      function isReplyValid() {
+        return "reply" in request.resource.data &&
+          "body" in request.resource.data.reply &&
+          request.resource.data.reply.body is string &&
+          request.resource.data.reply.body.size() < 200
+      }
+
+      function isToSomeone() {
+        return request.resource.data.to != null // chaaaange
+      }
+
+      function isToAuthUser() {
+        return request.auth.uid == resource.data.to;
+      }
+
+      function hasReply() {
+        return resource.data.reply != null;
+      }
+
+      function isUpdateValid() {
+        return request.resource.data.to == resource.data.to &&
+          request.resource.data.body == resource.data.body && 
+          isReplyValid();
+      }
     }
   }
 }
