@@ -17,8 +17,8 @@ const Reply = ({ message, reply }) => (
 
 export function LastReplies({ messages, onNext, hasMore }) {
   return (
-    <>
-      <h2 className="font-bold text-lg">Ultimas Respostas</h2>
+    <div>
+      <h2 className="font-bold text-lg pb-4">Ultimas Respostas</h2>
       <InfiniteScroll
         dataLength={messages.length}
         next={onNext}
@@ -40,14 +40,14 @@ export function LastReplies({ messages, onNext, hasMore }) {
           />
         ))}
       </InfiniteScroll>
-    </>
+    </div>
   );
 }
 
 export function AskField({ onSend }) {
   const [message, setMessage] = React.useState("");
   const alert = useAlert();
-  const sendMessage = (msg) => {
+  const send = (msg) => {
     onSend(msg).then(
       () => alert.success("Mensagem enviada!"),
       () => alert.error("Opa deu algo errado :(")
@@ -64,7 +64,7 @@ export function AskField({ onSend }) {
         value={message}
       />
       <ConfirmButton
-        onClick={() => sendMessage(message)}
+        onClick={() => send(message)}
         disabled={message.length === 0 || message.length > 200}
         className="ml-auto"
       >
@@ -74,28 +74,46 @@ export function AskField({ onSend }) {
   );
 }
 
+const ShareProfile = () => (
+  <div>
+    <button
+      type="button"
+      onClick={() => null}
+      className="rounded-10 border border-grey-400 py-2 px-8 active:scale-75 hover:shadow-ask focus:bg-grey-200"
+    >
+      Tweetar perfil
+    </button>
+  </div>
+);
+
 export function UserInfo({ user }) {
-  const authUser = useAuthUser();
   return (
-    <div className="flex items-center">
-      <img className="h-12 rounded-full mr-6" src={user.photoURL} />
-      <div className="flex flex-col justify-center">
-        <h1 className="font-bold text-2xl">{user.displayName}</h1>
-        <span className="text-md text-grey-600">{user.userName}</span>
+    <div className="pb-0 sm:pb-8 flex items-center justify-between flex-wrap">
+      <div className="pb-8 sm:pb-0 flex flex-no-wrap items-center">
+        <img
+          alt="profile"
+          src={user.photoURL}
+          className="h-12 rounded-full mr-6"
+        />
+        <div className="flex flex-col justify-center">
+          <h1 className="font-bold text-2xl">{user.displayName}</h1>
+          <span className="text-md text-grey-600">{user.userName}</span>
+        </div>
       </div>
-      {/* {authUser.id === user.id && (
-        <ConfirmButton onClick={() => {}}>Compartilhar perfil</ConfirmButton>
-      )} */}
+      <ShareProfile />
     </div>
   );
 }
 
 export default function UserProfile({ user, initialMessages }) {
+  const authUser = useAuthUser();
   const [{ messages, more, hasMore }] = useMessages(user.id, initialMessages);
   return (
     <div className="space-y-8">
       <UserInfo user={user} />
-      <AskField onSend={(msg) => sendMessage(msg, user.id)} />
+      {authUser?.id !== user.id && (
+        <AskField onSend={(msg) => sendMessage(msg, user.id)} />
+      )}
       <LastReplies messages={messages} onNext={more} hasMore={hasMore} />
     </div>
   );

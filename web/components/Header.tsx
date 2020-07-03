@@ -4,8 +4,9 @@ import Popover from "react-popover";
 
 import { logout } from "lib/auth";
 
-import { useAuthUser } from "web/components/AuthUserProvider";
-import { LoginWithTwitter } from "./Login";
+import { useAuthUser } from "components/AuthUserProvider";
+import { LoginButton } from "components/Button";
+import { MenuItem, Menu } from "components/Menu";
 
 function AvatarMenu({ photoURL, userId }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,26 +17,22 @@ function AvatarMenu({ photoURL, userId }) {
       preferPlace="below"
       onOuterAction={() => setIsOpen(false)}
       body={
-        <div className="flex flex-col rounded-xl bg-white shadow-lg overflow-hidden">
+        <Menu>
           <Link href="/u/[id]" as={`/u/${userId}`}>
-            <a className="px-4 py-1 pt-2 hover:bg-grey-200 active:opacity-75">
-              Meu Perfil
-            </a>
+            <MenuItem className="pt-2">Meu Perfil</MenuItem>
           </Link>
-          <button
-            onClick={logout}
-            className="px-4 py-1 pb-2 text-red-500 hover:bg-grey-200 active:opacity-75"
-          >
+          <MenuItem onClick={logout} className="pb-2 text-red-500">
             Sair
-          </button>
-        </div>
+          </MenuItem>
+        </Menu>
       }
     >
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="h-12 w-12 my-auto rounded-full border-grey-300 focus:border-blue-200 hover:opacity-75 border-4"
+        className="h-12 w-12 my-auto rounded-full border-grey-300 focus:border-purple-200 hover:opacity-75 border-4"
       >
-        <img src={photoURL} className="h-full rounded-full" />
+        <img src={photoURL} alt="profile" className="h-full rounded-full" />
       </button>
     </Popover>
   );
@@ -45,18 +42,21 @@ export default function Header() {
   const authUser = useAuthUser();
   return (
     <header className="flex justify-between items-center pb-12">
-      <img src="/dog-emoji.png" className="h-12 w-auto" />
-      {!!authUser ? (
+      <img src="/dog-emoji.png" alt="dog emoji" className="h-12 w-auto" />
+      {authUser ? (
         <div className="flex items-center">
           <Link href="/messages">
-            <a className="mr-4 py-1 px-2 text-sm rounded-10 bg-grey-300 text-grey-600">
+            <button
+              type="button"
+              className="mr-4 py-1 px-2 text-sm rounded-10 bg-grey-300 text-grey-600 active:scale-90 focus:shadow-ask focus:scale-110"
+            >
               {`${authUser.unrepliedCount} Mensagens`}
-            </a>
+            </button>
           </Link>
           <AvatarMenu photoURL={authUser.photoURL} userId={authUser.id} />
         </div>
       ) : (
-        <LoginWithTwitter />
+        <LoginButton />
       )}
     </header>
   );

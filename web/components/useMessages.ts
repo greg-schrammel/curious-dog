@@ -25,7 +25,7 @@ export default function useMessages(
       isReplied,
       limit,
     });
-    cursor.current = msgs[msgs.length - 1];
+    cursor.current = msgs[limit - 1];
     setHasMore(!!cursor.current);
     setMessages(msgs);
   };

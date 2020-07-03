@@ -27,9 +27,11 @@
     "react-popover": "^0.5.10",
     "riteway": "^6.1.2",
     "styled-jsx-plugin-postcss": "^2.0.1",
+    "tailwind-rn": "^1.1.1",
     "tailwindcss": "^1.4.6",
     "tap-nirvana": "^1.1.0",
     "testcafe": "^1.8.7",
+    "twit": "^2.2.11",
     "webpack": "^4.43.0"
   },
   "devDependencies": {

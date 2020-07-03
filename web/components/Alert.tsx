@@ -9,7 +9,7 @@ const AlertTemplate = ({ style, options: { type }, message, close }) => (
     ${type === "error" && "bg-red-500"}`}
   >
     <span>{message}</span>
-    <button className="font-medium" onClick={close}>
+    <button type="button" className="font-medium" onClick={close}>
       Fechar
     </button>
   </div>
@@ -20,7 +20,7 @@ export default ({ children }) => (
     template={AlertTemplate}
     position={positions.BOTTOM_CENTER}
     timeout={5000}
-    offset={"30px"}
+    offset="30px"
     transition={transitions.SCALE}
   >
     {children}

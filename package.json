@@ -25,6 +25,7 @@
   "dependencies": {
     "eslint": "^7.3.1",
     "eslint-config-airbnb-typescript-prettier": "^3.1.0",
+    "eslint-import-resolver-typescript": "^2.0.0",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
     "now": "^19.1.1",

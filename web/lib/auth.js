@@ -1,16 +1,23 @@
 import app, { firebase } from "lib/firebase/client";
 import "firebase/auth";
+import "firebase/firestore";
 
 const auth = app.auth();
+const usersCollection = app.firestore().collection("users");
 
-export function logout() {
-  return auth.signOut();
+function registerSessionSW() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  }
 }
 
 export function login(provider) {
-  return auth.signInWithPopup(provider).then(() => {
-    registerSessionSW();
-  });
+  registerSessionSW();
+  return auth.signInWithPopup(provider);
+}
+
+export function logout() {
+  return auth.signOut();
 }
 
 export function onAuthStateChanged(cb) {
@@ -20,11 +27,13 @@ export function onAuthStateChanged(cb) {
 export function loginWithTwitter() {
   const twitterProvider = new firebase.auth.TwitterAuthProvider();
   twitterProvider.setCustomParameters({ allow_signup: "true" });
-  return login(twitterProvider);
-}
+  return login(twitterProvider).then((u) => {
+    const { secret, accessToken: token } = u.credential;
 
-function registerSessionSW() {
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" });
-  }
+    // if (u.additionalUserInfo.isNewUser) {
+    const userRef = usersCollection.doc(u.user.uid);
+    userRef.set({ userName: u.additionalUserInfo.username }, { merge: true }); // twitter @ handle, can't get on trigger
+    userRef.collection("credentials").doc("twitter").set({ token, secret });
+    // }
+  });
 }

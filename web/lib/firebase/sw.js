@@ -1,9 +1,9 @@
-import firebase from "./client";
+import client from "./client";
 import "firebase/auth";
 
 const getCurrentUser = () =>
-  new Promise((resolve, reject) => {
-    const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+  new Promise((resolve) => {
+    const unsubscribe = client.auth().onAuthStateChanged((user) => {
       unsubscribe();
       if (user) resolve(user);
       else resolve(null);
@@ -11,11 +11,11 @@ const getCurrentUser = () =>
   });
 
 const isHttpsOrLocal =
-  self.location.protocol == "https:" || self.location.hostname == "localhost";
+  self.location.protocol === "https:" || self.location.hostname === "localhost";
 
 self.addEventListener("fetch", (event) => {
   const isSameOrigin =
-    self.location.origin == new URL(event.request.url).origin;
+    self.location.origin === new URL(event.request.url).origin;
 
   if (!isSameOrigin || !isHttpsOrLocal)
     return event.respondWith(fetch(event.request));
@@ -26,14 +26,14 @@ self.addEventListener("fetch", (event) => {
     const tokenId = await user.getIdToken();
 
     const headers = new Headers(event.request.headers);
-    headers.append("Authorization", "Bearer " + tokenId);
+    headers.append("Authorization", `Bearer ${tokenId}`);
 
     const requestWithFirebaseInfo = new Request(event.request.url, {
       ...event.request,
-      headers: headers,
+      headers,
       mode: "same-origin",
     });
 
-    event.respondWith(fetch(requestWithFirebaseInfo));
+    return event.respondWith(fetch(requestWithFirebaseInfo));
   })();
 });

@@ -9,11 +9,11 @@ import { fetchUser } from "lib/api";
 
 import Header from "components/Header";
 import { AuthUserProvider, useAuthUser } from "components/AuthUserProvider";
-import { LoginWithTwitter } from "components/Login";
+import { LoginButton, ConfirmButton } from "components/Button";
 import useMessages from "components/useMessages";
 import Textarea from "components/Textarea";
-import { ConfirmButton } from "components/Button";
 import AlertProvider from "components/Alert";
+import { MenuItem, Menu } from "components/Menu";
 
 export function ReplyField({ onSend }) {
   const [body, setBody] = React.useState("");
@@ -53,9 +53,13 @@ export function ReplyField({ onSend }) {
 function Message({ message, onClick, isReplying = false, onDelete, onReply }) {
   const [isOpen, setIsOpen] = React.useState(false);
   return (
-    <div
+    <button
+      type="button"
       className={`flex flex-col space-y-2 p-3 rounded-xl
-      ${!isReplying && "hover:bg-grey-200 cursor-pointer"}`}
+      ${
+        !isReplying &&
+        "hover:bg-grey-200 focus:bg-grey-200 active:scale-75 cursor-pointer"
+      }`}
       onClick={onClick}
     >
       <div className="flex items-center">
@@ -66,34 +70,47 @@ function Message({ message, onClick, isReplying = false, onDelete, onReply }) {
           preferPlace="below"
           onOuterAction={() => setIsOpen(false)}
           body={
-            <div className="flex flex-col rounded-xl bg-white shadow-lg overflow-hidden">
-              <button
-                onClick={() => onDelete(message.id)}
-                className="px-4 py-1 pb-2 text-red-500 hover:bg-grey-200 active:opacity-75"
-              >
+            <Menu>
+              <MenuItem onClick={onDelete} className="py-2 text-red-500">
                 Delete
-              </button>
-            </div>
+              </MenuItem>
+            </Menu>
           }
         >
-          <FaEllipsisH
+          <button
+            type="button"
             onClick={(e) => {
               setIsOpen(true);
               e.stopPropagation();
             }}
-            className="ml-auto h-5 w-5 text-grey-600 cursor-pointer"
-          />
+            className="ml-auto cursor-pointer focus:opacity-75"
+          >
+            <FaEllipsisH className="h-5 w-5 text-grey-600" />
+          </button>
         </Popover>
       </div>
       {isReplying && <ReplyField onSend={(r) => onReply(r)} />}
-    </div>
+    </button>
   );
 }
 
-function Messages() {
-  const authUser = useAuthUser();
+const NothingHereShareYourProfile = () => {
+  const [hasShared, setHasShared] = React.useState(false);
+  return (
+    <div>
+      <span>Nada por aqui, compartilhar seu perfil pode ajudar</span>
+      {hasShared ? (
+        <TweetProfileButton onTweet={() => setHasShared(true)} />
+      ) : (
+        <span>Agora é só esperar seus fãs chegarem</span>
+      )}
+    </div>
+  );
+};
+
+function UnrepliedMessages({ userId }) {
   const [{ messages, more, hasMore }, { remove, reply }] = useMessages(
-    authUser.id,
+    userId,
     null,
     false
   );
@@ -110,7 +127,7 @@ function Messages() {
           messages.length > 0 ? (
             <span>Vc viu todas!!</span>
           ) : (
-            <span>Nada por aqui, compartilhar seu perfil pode ajudar</span>
+            <NothingHereShareYourProfile />
           )
         }
       >
@@ -132,24 +149,31 @@ function Messages() {
 function YouShouldLogin() {
   return (
     <div className="mx-auto py-12 flex flex-col space-y-8">
-      <h1>Voce não esta logado</h1>
-      <LoginWithTwitter />
+      <h1 className="text-2xl font-bold text-center">Você não esta logado</h1>
+      <LoginButton className="mx-auto" />
     </div>
   );
 }
 
-export default function Me({ me }) {
+function Me() {
+  const me = useAuthUser();
+  return (
+    <div className="p-8 max-w-2xl lg:max-w-3xl mx-auto">
+      <Header />
+      {me ? <UnrepliedMessages userId={me.id} /> : <YouShouldLogin />}
+    </div>
+  );
+}
+
+export default ({ me }) => {
   return (
     <AlertProvider>
       <AuthUserProvider user={me}>
-        <div className="p-8 max-w-2xl lg:max-w-3xl mx-auto">
-          <Header />
-          {me ? <Messages /> : <YouShouldLogin />}
-        </div>
+        <Me />
       </AuthUserProvider>
     </AlertProvider>
   );
-}
+};
 
 export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   // authorization: "Bearer " + tokenId

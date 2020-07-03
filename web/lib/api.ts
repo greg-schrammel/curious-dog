@@ -43,12 +43,12 @@ const getMessages = (s) =>
 const messagesQuery = (userId) =>
   userMessagesQuery(userId)
     .where("reply", "==", null)
-    .orderBy("lastModifiedAt");
+    .orderBy("lastModifiedAt", "desc");
 const repliesQuery = (userId) =>
   userMessagesQuery(userId)
     .where("reply.body", ">=", "")
     .orderBy("reply.body")
-    .orderBy("lastModifiedAt");
+    .orderBy("lastModifiedAt", "desc");
 
 export const fetchMessages = (
   userId: User["id"],
@@ -62,22 +62,6 @@ export const fetchMessages = (
       .get()
       .then(getMessages);
   return q(userId).limit(limit).get().then(getMessages);
-};
-
-export const observeMessages = (
-  userId: User["id"],
-  { isReplied = true, startAfter = undefined, limit = 20 } = {},
-  onMessage
-) => {
-  const q = isReplied ? repliesQuery : messagesQuery;
-  if (startAfter)
-    return q(userId)
-      .startAfter(startAfter)
-      .limit(limit)
-      .onSnapshot((s) => onMessage(getMessages(s)));
-  return q(userId)
-    .limit(limit)
-    .onSnapshot((s) => onMessage(getMessages(s)));
 };
 
 export const fetchUser = (userId: User["id"]) =>
