@@ -2,12 +2,13 @@ node_modules
 
 curiousdog-test-firebase.json
 
-**.next
+.next
+.expo
 
 .now
 
 .DS_Store
-.env*
+.env.local*
 
 **.log
 

@@ -30,10 +30,10 @@ export function loginWithTwitter() {
   return login(twitterProvider).then((u) => {
     const { secret, accessToken: token } = u.credential;
 
-    // if (u.additionalUserInfo.isNewUser) {
-    const userRef = usersCollection.doc(u.user.uid);
-    userRef.set({ userName: u.additionalUserInfo.username }, { merge: true }); // twitter @ handle, can't get on trigger
-    userRef.collection("credentials").doc("twitter").set({ token, secret });
-    // }
+    if (u.additionalUserInfo.isNewUser) {
+      const userRef = usersCollection.doc(u.user.uid);
+      userRef.set({ userName: u.additionalUserInfo.username }, { merge: true }); // twitter @ handle (can't get on trigger)
+      userRef.collection("credentials").doc("twitter").set({ token, secret }); // save credentials to use in the twitter api
+    }
   });
 }

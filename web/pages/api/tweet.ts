@@ -1,6 +1,6 @@
 import Twitter from "twit";
-import admin, { userIdFromToken } from "lib/firebase/admin";
 import { NextApiRequest, NextApiResponse } from "next";
+import admin, { userIdFromToken } from "lib/firebase/admin";
 
 const usersCollection = admin.firestore().collection("users");
 
@@ -10,8 +10,8 @@ export default async (
 ) => {
   // if (method !== "POST") return;
   const tokenId = headers.authorization?.split(" ")[1];
-
   const userId = await userIdFromToken(tokenId);
+
   const credentials = await usersCollection
     .doc(userId)
     .collection("credentials")

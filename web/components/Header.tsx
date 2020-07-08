@@ -1,15 +1,21 @@
-import React, { useState } from "react";
-import Link from "next/link";
+import * as React from "react";
 import Popover from "react-popover";
+import { TouchableOpacity, Image, View, Text } from "react-native";
+import { useHover, useFocus } from "react-native-web-hooks";
 
 import { logout } from "lib/auth";
+import { Colors, Typography } from "theme";
 
+import Link from "components/Link";
 import { useAuthUser } from "components/AuthUserProvider";
-import { LoginButton } from "components/Button";
 import { MenuItem, Menu } from "components/Menu";
+import { LoginWithTwitterButton } from "components/LoginWithTwitterButton";
 
 function AvatarMenu({ photoURL, userId }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const ref = React.useRef(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const isHovered = useHover(ref);
+  const isFocused = useFocus(ref);
   return (
     <Popover
       tipSize={0.01}
@@ -19,45 +25,88 @@ function AvatarMenu({ photoURL, userId }) {
       body={
         <Menu>
           <Link href="/u/[id]" as={`/u/${userId}`}>
-            <MenuItem className="pt-2">Meu Perfil</MenuItem>
+            <MenuItem style={{ paddingTop: 8 }}>
+              <Text style={Typography.body}>Meu Perfil</Text>
+            </MenuItem>
           </Link>
-          <MenuItem onClick={logout} className="pb-2 text-red-500">
-            Sair
+          <MenuItem onPress={logout} style={{ paddingBottom: 8 }}>
+            <Text style={[Typography.body, { color: Colors.red[500] }]}>
+              Sair
+            </Text>
           </MenuItem>
         </Menu>
       }
     >
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-12 w-12 my-auto rounded-full border-grey-300 focus:border-purple-200 hover:opacity-75 border-4"
+      <TouchableOpacity
+        onPress={() => setIsOpen(true)}
+        activeOpacity={1}
+        ref={ref}
       >
-        <img src={photoURL} alt="profile" className="h-full rounded-full" />
-      </button>
+        <Image
+          source={photoURL}
+          accessibilityLabel="profile"
+          style={{
+            borderRadius: 1000,
+            height: 48,
+            width: 48,
+            borderColor: isFocused ? Colors.indigo[200] : Colors.grey[300],
+            opacity: isHovered && !isOpen ? 0.75 : 1,
+            borderWidth: 4,
+          }}
+        />
+      </TouchableOpacity>
     </Popover>
   );
 }
 
+const UnrepliedCounterBadge = ({ unrepliedCount }) => {
+  const ref = React.useRef(null);
+  const isHovered = useHover(ref);
+  return (
+    <Link href="/messages">
+      <TouchableOpacity
+        ref={ref}
+        style={{
+          borderRadius: 8,
+          backgroundColor: isHovered ? Colors.grey[200] : Colors.grey[300],
+          paddingVertical: 4,
+          paddingHorizontal: 8,
+          marginRight: 24,
+        }}
+      >
+        <Text
+          style={[Typography.small, { color: Colors.grey[600] }]}
+        >{`${unrepliedCount} Mensagens`}</Text>
+      </TouchableOpacity>
+    </Link>
+  );
+};
+
 export default function Header() {
   const authUser = useAuthUser();
   return (
-    <header className="flex justify-between items-center pb-12">
-      <img src="/dog-emoji.png" alt="dog emoji" className="h-12 w-auto" />
+    <View
+      accessibilityTraits="header"
+      style={{
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingBottom: 32,
+        flexDirection: "row",
+      }}
+    >
+      <Image
+        source={require("public/dog-emoji.png")}
+        accessibilityLabel="dog emoji"
+        style={{ borderRadius: 1000, height: 48, width: 48 }}
+      />
       {authUser ? (
-        <div className="flex items-center">
-          <Link href="/messages">
-            <button
-              type="button"
-              className="mr-4 py-1 px-2 text-sm rounded-10 bg-grey-300 text-grey-600 active:scale-90 focus:shadow-ask focus:scale-110"
-            >
-              {`${authUser.unrepliedCount} Mensagens`}
-            </button>
-          </Link>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <UnrepliedCounterBadge unrepliedCount={authUser.unrepliedCount} />
           <AvatarMenu photoURL={authUser.photoURL} userId={authUser.id} />
-        </div>
+        </View>
       ) : (
-        <LoginButton />
+        <LoginWithTwitterButton />
       )}
-    </header>
+    </View>
   );
 }

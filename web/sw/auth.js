@@ -1,4 +1,4 @@
-import client from "./client";
+import client from "../lib/firebase/client";
 import "firebase/auth";
 
 const getCurrentUser = () =>
@@ -20,20 +20,22 @@ self.addEventListener("fetch", (event) => {
   if (!isSameOrigin || !isHttpsOrLocal)
     return event.respondWith(fetch(event.request));
 
-  (async () => {
-    const user = await getCurrentUser();
-    if (!user) return event.respondWith(fetch(event.request));
-    const tokenId = await user.getIdToken();
+  event.respondWith(
+    (async () => {
+      const user = await getCurrentUser();
+      if (!user) return event.respondWith(fetch(event.request));
+      const tokenId = await user.getIdToken();
 
-    const headers = new Headers(event.request.headers);
-    headers.append("Authorization", `Bearer ${tokenId}`);
+      const headers = new Headers(event.request.headers);
+      headers.append("Authorization", `Bearer ${tokenId}`);
 
-    const requestWithFirebaseInfo = new Request(event.request.url, {
-      ...event.request,
-      headers,
-      mode: "same-origin",
-    });
+      const requestWithFirebaseInfo = new Request(event.request.url, {
+        ...event.request,
+        headers,
+        mode: "same-origin",
+      });
 
-    return event.respondWith(fetch(requestWithFirebaseInfo));
-  })();
+      return fetch(requestWithFirebaseInfo);
+    })()
+  );
 });

@@ -7,16 +7,10 @@
     "import/prefer-default-export": "off",
     "import/no-duplicates": "off",
     "consistent-return": "off",
-    "react/require-default-props": "off"
+    "react/require-default-props": "off",
+    "global-require": "off",
+    "@typescript-eslint/no-var-requires": "off"
   },
-  "overrides": [
-    {
-      "files": ["*.js"],
-      "rules": {
-        "@typescript-eslint/no-var-requires": "off"
-      }
-    }
-  ],
   "settings": {
     "import/resolver": {
       "typescript": {

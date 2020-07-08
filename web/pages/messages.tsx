@@ -1,69 +1,93 @@
 import * as React from "react";
 import { GetServerSideProps } from "next";
-import InfiniteScroll from "react-infinite-scroll-component";
 import { useAlert } from "react-alert";
 import Popover from "react-popover";
-import { FaTwitter, FaEllipsisH } from "react-icons/fa";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { View, TouchableOpacity, Text, FlatList } from "react-native";
+import { useHover, useFocus } from "react-native-web-hooks";
 
-import { fetchUser } from "lib/api";
+import { fetchUser } from "lib/user";
+import tweet from "lib/twitter";
 
-import Header from "components/Header";
 import { AuthUserProvider, useAuthUser } from "components/AuthUserProvider";
-import { LoginButton, ConfirmButton } from "components/Button";
 import useMessages from "components/useMessages";
 import Textarea from "components/Textarea";
 import AlertProvider from "components/Alert";
 import { MenuItem, Menu } from "components/Menu";
+import { Colors, Typography } from "theme";
+import ShareButton from "components/ShareButton";
+import { LoginWithTwitterButton } from "components/LoginWithTwitterButton";
+import Layout from "components/Layout";
 
 export function ReplyField({ onSend }) {
   const [body, setBody] = React.useState("");
   const [shouldTweet, setShouldTweet] = React.useState(true);
-  const alert = useAlert();
-  const sendReply = (r) =>
-    onSend(r).then(
-      () => alert.success("Resposta enviada!"),
-      () => alert.error("Opa deu algo errado :(")
-    );
   return (
-    <div className="flex flex-col space-y-4">
+    <View>
       <Textarea
-        onChange={(e) => setBody(e.currentTarget.value)}
+        onChangeText={setBody}
         value={body}
         placeholder="Responda aqui"
         textLimit={200}
+        style={{ marginVertical: 16 }}
       />
-      <div className="flex items-center">
-        <FaTwitter
-          onClick={() => setShouldTweet(!shouldTweet)}
-          className={`ml-auto mr-4 h-6 w-6 ${
-            shouldTweet ? "text-twitter" : "text-grey-600"
-          }`}
-        />
-        <ConfirmButton
-          onClick={() => sendReply({ body })}
-          disabled={body.length > 200}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "flex-end",
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => setShouldTweet(!shouldTweet)}
+          style={{ marginRight: 24 }}
         >
-          Enviar
-        </ConfirmButton>
-      </div>
-    </div>
+          <FontAwesome5
+            name="twitter"
+            size={24}
+            color={shouldTweet ? Colors.twitter : Colors.grey[600]}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => onSend({ body }, shouldTweet)}
+          style={{
+            borderRadius: 10,
+            backgroundColor: Colors.black,
+            paddingVertical: 8,
+            paddingHorizontal: 16,
+          }}
+        >
+          <Text style={[Typography.body, { color: Colors.white }]}>Enviar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 
-function Message({ message, onClick, isReplying = false, onDelete, onReply }) {
+function Message({ message, onDelete }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const ref = React.useRef();
+  const isHovered = useHover(ref);
+  const isFocused = useFocus(ref);
   return (
-    <button
-      type="button"
-      className={`flex flex-col space-y-2 p-3 rounded-xl
-      ${
-        !isReplying &&
-        "hover:bg-grey-200 focus:bg-grey-200 active:scale-75 cursor-pointer"
-      }`}
-      onClick={onClick}
+    <View
+      ref={ref}
+      style={{
+        padding: 12,
+        marginVertical: 4,
+        backgroundColor:
+          isHovered || isFocused ? Colors.grey[300] : Colors.white,
+        borderRadius: 10,
+      }}
     >
-      <div className="flex items-center">
-        <h2 className="font-medium text-md">{message.body}</h2>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Text style={Typography.subheader}>{message.body}</Text>
         <Popover
           tipSize={0.01}
           isOpen={isOpen}
@@ -71,97 +95,145 @@ function Message({ message, onClick, isReplying = false, onDelete, onReply }) {
           onOuterAction={() => setIsOpen(false)}
           body={
             <Menu>
-              <MenuItem onClick={onDelete} className="py-2 text-red-500">
-                Delete
+              <MenuItem onPress={onDelete}>
+                <Text style={[Typography.body, { color: Colors.red[500] }]}>
+                  Delete
+                </Text>
               </MenuItem>
             </Menu>
           }
         >
-          <button
-            type="button"
-            onClick={(e) => {
-              setIsOpen(true);
-              e.stopPropagation();
-            }}
-            className="ml-auto cursor-pointer focus:opacity-75"
-          >
-            <FaEllipsisH className="h-5 w-5 text-grey-600" />
-          </button>
+          <TouchableOpacity onPress={() => setIsOpen(true)}>
+            <FontAwesome5 name="ellipsis-h" size={20} color={Colors.black} />
+          </TouchableOpacity>
         </Popover>
-      </div>
-      {isReplying && <ReplyField onSend={(r) => onReply(r)} />}
-    </button>
+      </View>
+    </View>
   );
 }
 
 const NothingHereShareYourProfile = () => {
   const [hasShared, setHasShared] = React.useState(false);
   return (
-    <div>
-      <span>Nada por aqui, compartilhar seu perfil pode ajudar</span>
+    <View>
+      <Text style={[Typography.body, { paddingVertical: 16 }]}>
+        Nada por aqui, compartilhar seu perfil pode ajudar
+      </Text>
       {hasShared ? (
-        <TweetProfileButton onTweet={() => setHasShared(true)} />
+        <Text style={Typography.body}>
+          Agora é só esperar seus fãs chegarem
+        </Text>
       ) : (
-        <span>Agora é só esperar seus fãs chegarem</span>
+        <ShareButton onShared={() => setHasShared(true)} />
       )}
-    </div>
+    </View>
   );
 };
 
 function UnrepliedMessages({ userId }) {
-  const [{ messages, more, hasMore }, { remove, reply }] = useMessages(
-    userId,
-    null,
-    false
-  );
+  const [
+    { messages, more, hasMore, isLoading },
+    { remove, reply },
+  ] = useMessages(userId, null, { isReplied: false });
   const [replyingTo, setReplyingTo] = React.useState<undefined | string>();
+  const alert = useAlert();
+  const sendReply = (message, r, shouldTweet) =>
+    reply(message.id, r).then(
+      () => {
+        alert.success("Resposta enviada!");
+        if (shouldTweet)
+          tweet(`${message.body} — ${r.body}
+        ${window.location.hostname}/u/${message.to}?m=${message.id}`);
+      },
+      () => alert.error("Opa deu algo errado :(")
+    );
   return (
     <>
-      <h2 className="font-bold text-xl pb-6">Suas mensagens não respondidas</h2>
-      <InfiniteScroll
-        dataLength={messages.length}
-        next={more}
-        hasMore={hasMore}
-        loader={<span>Carregando...</span>}
-        endMessage={
-          messages.length > 0 ? (
-            <span>Vc viu todas!!</span>
-          ) : (
-            <NothingHereShareYourProfile />
-          )
-        }
-      >
-        {messages.map((message) => (
-          <Message
-            key={message.id}
-            message={message}
-            onClick={() => setReplyingTo(message.id)}
-            onDelete={() => remove(message.id)}
-            onReply={(r) => reply(message.id, r)}
-            isReplying={replyingTo === message.id}
-          />
-        ))}
-      </InfiniteScroll>
+      <Text style={[Typography.largeHeader, { paddingBottom: 16 }]}>
+        Suas mensagens não respondidas
+      </Text>
+      {messages.length > 0 || isLoading ? (
+        <FlatList
+          contentContainerStyle={{
+            flex: 1,
+            flexDirection: "column",
+            height: "100%",
+            width: "100%",
+          }}
+          onEndReachedThreshold={0.2}
+          onEndReached={() => more(5)}
+          ListFooterComponent={() =>
+            hasMore ? (
+              <Text style={[Typography.body, { paddingVertical: 16 }]}>
+                Carregando...
+              </Text>
+            ) : (
+              <Text
+                style={[
+                  Typography.small,
+                  {
+                    paddingVertical: 32,
+                    margin: "auto",
+                    color: Colors.grey[600],
+                  },
+                ]}
+              >
+                Isso é tudo
+              </Text>
+            )
+          }
+          data={messages}
+          keyExtractor={(message) => message.id}
+          renderItem={({ item: message }) =>
+            replyingTo !== message.id ? (
+              <TouchableOpacity
+                key={message.id}
+                onPress={() => setReplyingTo(message.id)}
+              >
+                <Message
+                  message={message}
+                  onDelete={() => remove(message.id)}
+                />
+              </TouchableOpacity>
+            ) : (
+              <View key={message.id} style={{ padding: 12 }}>
+                <Message
+                  message={message}
+                  onDelete={() => remove(message.id)}
+                />
+                <ReplyField
+                  onSend={(r, shouldTweet) =>
+                    sendReply(message, r, shouldTweet)
+                  }
+                />
+              </View>
+            )
+          }
+        />
+      ) : (
+        <NothingHereShareYourProfile />
+      )}
     </>
   );
 }
 
 function YouShouldLogin() {
   return (
-    <div className="mx-auto py-12 flex flex-col space-y-8">
-      <h1 className="text-2xl font-bold text-center">Você não esta logado</h1>
-      <LoginButton className="mx-auto" />
-    </div>
+    <View style={{ alignItems: "center", paddingVertical: 32 }}>
+      <Text style={[Typography.header, { paddingBottom: 16 }]}>
+        Você não esta logado
+      </Text>
+      <LoginWithTwitterButton />
+    </View>
   );
 }
 
 function Me() {
   const me = useAuthUser();
   return (
-    <div className="p-8 max-w-2xl lg:max-w-3xl mx-auto">
-      <Header />
+    <Layout>
       {me ? <UnrepliedMessages userId={me.id} /> : <YouShouldLogin />}
-    </div>
+    </Layout>
   );
 }
 
@@ -179,11 +251,9 @@ export const getServerSideProps: GetServerSideProps = async ({ req }) => {
   // authorization: "Bearer " + tokenId
   const tokenId = req.headers.authorization?.split(" ")[1];
 
-  const loggedUser = tokenId
-    ? await require("lib/firebase/admin")
-        .userIdFromToken(tokenId)
-        .then(fetchUser)
-    : null;
+  const loggedUser = await require("lib/firebase/admin")
+    .userIdFromToken(tokenId)
+    .then(fetchUser, () => null); // if it fails the user is null
 
   return {
     props: {

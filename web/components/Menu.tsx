@@ -1,19 +1,37 @@
 import * as React from "react";
+import { View, TouchableOpacityProps, TouchableOpacity } from "react-native";
+import { Shadow, Colors } from "theme";
 
-export const MenuItem = ({ className = "", children, onClick = undefined }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`px-4 py-1 hover:bg-grey-200 focus:bg-grey-200 active:opacity-75 ${className}`}
+import { useHover, useFocus } from "react-native-web-hooks";
+
+export const MenuItem = ({
+  style,
+  ...props
+}: TouchableOpacityProps & { children: React.ReactElement }) => {
+  const ref = React.useRef();
+  const isHovered = useHover(ref);
+  const isFocused = useFocus(ref);
+  return (
+    <TouchableOpacity
+      ref={ref}
+      style={[
+        { paddingHorizontal: 16, paddingVertical: 8, alignItems: "center" },
+        (isHovered || isFocused) && { backgroundColor: Colors.grey[200] },
+        style,
+      ]}
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      {...props}
+    />
+  );
+};
+
+export const Menu = ({ children }) => (
+  <View
+    style={[
+      Shadow.large,
+      { borderRadius: 16, overflow: "hidden", backgroundColor: Colors.white },
+    ]}
   >
     {children}
-  </button>
-);
-
-export const Menu = ({ className = "", children }) => (
-  <div
-    className={`flex flex-col rounded-xl bg-white shadow-ask overflow-hidden ${className}`}
-  >
-    {children}
-  </div>
+  </View>
 );

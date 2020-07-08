@@ -1,5 +1,12 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import * as React from "react";
 import Head from "next/head";
+
+import "resize-observer-polyfill/dist/ResizeObserver.global";
+
+if (typeof window === "undefined") {
+  CSS.supports = () => true; // Expo Blur View error
+}
 
 const favicon = "/dog-emoji.png";
 const title = "CuriousDog";
@@ -23,21 +30,6 @@ export default ({ Component, pageProps }) => {
         />
       </Head>
       <Component {...pageProps} />
-      <style jsx global>
-        {`
-          @import "tailwindcss/base";
-          @import "tailwindcss/components";
-          @import "tailwindcss/utilities";
-
-          html {
-            font-family: "Inter", sans-serif;
-          }
-
-          button:focus {
-            outline: 0; /* WORK ON ACESSIBILITY LATER */
-          }
-        `}
-      </style>
     </main>
   );
 };

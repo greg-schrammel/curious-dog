@@ -1,36 +1,53 @@
 import * as React from "react";
 import {
   Message,
-  fetchMessages,
   deleteMessage,
   replyMessage,
   Reply,
-} from "lib/api";
+  unrepliedMessagesQuery,
+  repliedMessagesQuery,
+} from "lib/message";
 
-const limit = 20;
+const getData = (s) => s.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+export function usePagination(query, initial: Array<Message>) {
+  const cursor = React.useRef(initial && initial[initial.length - 1]);
+  const next = async (howMuch = 10) => {
+    const queryResult = await (cursor.current
+      ? query.startAfter(cursor.current)
+      : query
+    )
+      .limit(howMuch)
+      .get()
+      .then(getData);
+    cursor.current = queryResult[howMuch - 1];
+    return queryResult;
+  };
+  return next;
+}
 
 export default function useMessages(
   userId,
-  initial: Array<Message>,
-  isReplied = true
+  initial,
+  { isReplied = false } = {}
 ) {
-  const [messages, setMessages] = React.useState(initial || []);
-  const cursor = React.useRef(initial && initial[limit - 1]);
-  const [hasMore, setHasMore] = React.useState(
-    !initial || initial.length !== 0 // if initial is an empty array, there is no more
-  );
-  const more = async () => {
-    const msgs = await fetchMessages(userId, {
-      startAfter: cursor.current,
-      isReplied,
-      limit,
+  const query = isReplied
+    ? repliedMessagesQuery(userId)
+    : unrepliedMessagesQuery(userId);
+  const next = usePagination(query, initial);
+  const [messages, setMessages] = React.useState<Message[]>(initial || []);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [hasMore, setHasMore] = React.useState(initial && initial.length !== 0);
+  const more = (howMuch = 10) => {
+    next(howMuch).then((msgs) => {
+      setMessages(msgs);
+      setIsLoading(false);
+      setHasMore(!!msgs[howMuch - 1]);
     });
-    cursor.current = msgs[limit - 1];
-    setHasMore(!!cursor.current);
-    setMessages(msgs);
   };
   React.useEffect(() => {
     if (!initial) more();
+    else setIsLoading(false);
   }, []);
   const filterMsg = (msgId) => messages.filter((m) => m.id !== msgId);
   const remove = (msgId) =>
@@ -38,7 +55,7 @@ export default function useMessages(
   const reply = (msgId, r: Reply) =>
     replyMessage(msgId, r).then(() => setMessages(filterMsg(msgId)));
   return [
-    { messages, more, hasMore },
+    { messages, more, hasMore, isLoading },
     { remove, reply },
   ];
 }

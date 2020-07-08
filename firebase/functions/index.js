@@ -27,12 +27,13 @@ const updateUserUnrepliedCount = async (userId, howMuch) => {
 exports.onUpdateMessage = functions.firestore
   .document("messages/{messageId}")
   .onUpdate(({ before, after }) => {
-    if (!before.get("reply") && after.get("reply"))
+    if (!before.get("reply") && after.get("reply")) {
       updateUserUnrepliedCount(before.get("to"), -1);
-    return after.ref.set(
-      { lastModifiedAt: admin.firestore.FieldValue.serverTimestamp() },
-      { merge: true }
-    );
+      return after.ref.set(
+        { lastModifiedAt: admin.firestore.FieldValue.serverTimestamp() },
+        { merge: true }
+      );
+    }
   });
 
 exports.onCreateMessage = functions.firestore

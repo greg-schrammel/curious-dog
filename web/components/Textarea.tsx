@@ -1,37 +1,58 @@
 import * as React from "react";
 import TextareaAutosize from "react-autosize-textarea";
+import { StyleProp, View, ViewStyle, Text } from "react-native";
+import { Shadow, Colors, Typography } from "theme";
 
 interface TextareaProps {
-  onChange: (e: React.FormEvent<HTMLTextAreaElement>) => void;
+  onChangeText: (e: string) => void;
   value: string;
   placeholder: string;
   textLimit: number;
-  className?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function Textarea({
-  onChange,
+  onChangeText,
   value,
   placeholder,
   textLimit,
-  className = "rounded-2xl bg-white shadow-ask",
+  style,
 }: TextareaProps) {
   const hasTextOverflow = value.length > textLimit;
   return (
-    <div className={`p-4 pb-0 ${className}`}>
+    <View
+      style={[
+        Shadow.large,
+        { padding: 16, paddingBottom: 0, borderRadius: 16 },
+        style,
+      ]}
+    >
       <TextareaAutosize
-        onChange={onChange}
+        onChange={(e) => onChangeText(e.currentTarget.value)}
         placeholder={placeholder}
         value={value}
-        className="w-full resize-none focus:outline-none placeholder-grey-600"
-        rows={3}
+        rows={2}
+        style={{
+          fontSize: 16,
+          fontWeight: 400,
+          fontFamily: "Inter",
+          border: "none",
+          resize: "none",
+          outline: "none",
+        }}
       />
-      <div
-        className={`flex justify-end items-center text-sm pb-3 font-medium
-        ${hasTextOverflow ? "text-red-500" : "text-grey-600"}`}
+      <Text
+        style={[
+          Typography.small,
+          {
+            textAlign: "right",
+            paddingVertical: 8,
+            color: hasTextOverflow ? Colors.red[500] : Colors.grey[600],
+          },
+        ]}
       >
         {value.length}/{textLimit}
-      </div>
-    </div>
+      </Text>
+    </View>
   );
 }
