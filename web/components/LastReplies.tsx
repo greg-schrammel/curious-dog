@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, FlatList } from "react-native";
 
 import { Typography, Colors } from "theme";
 import { Message } from "lib/message";
+import { useHover } from "react-native-web-hooks";
 import useMessages from "./useMessages";
 
 export const Reply = ({ message }: { message: Message }) => (
@@ -10,9 +11,23 @@ export const Reply = ({ message }: { message: Message }) => (
     <Text style={[Typography.subheader, { paddingBottom: 8 }]}>
       {message.body}
     </Text>
-    <Text style={Typography.body}>{message.body}</Text>
+    <Text style={Typography.body}>{message.reply.body}</Text>
   </View>
 );
+
+const OpenableReply = ({ message, onPress }) => {
+  const ref = React.useRef();
+  const isHovered = useHover(ref);
+  return (
+    <TouchableOpacity
+      ref={ref}
+      style={{ opacity: isHovered ? 0.75 : 1 }}
+      onPress={onPress}
+    >
+      <Reply message={message} />
+    </TouchableOpacity>
+  );
+};
 
 export function LastReplies({ onPressMessage, initialMessages, user }) {
   const [{ messages, more, hasMore, isLoading }] = useMessages(
@@ -52,12 +67,10 @@ export function LastReplies({ onPressMessage, initialMessages, user }) {
           data={messages}
           keyExtractor={(message) => message.id}
           renderItem={({ item: message }) => (
-            <TouchableOpacity
-              key={message.id}
+            <OpenableReply
               onPress={() => onPressMessage(message)}
-            >
-              <Reply message={message} />
-            </TouchableOpacity>
+              message={message}
+            />
           )}
         />
       ) : (

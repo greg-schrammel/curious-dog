@@ -10,9 +10,16 @@ import {
 
 const getData = (s) => s.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-export function usePagination(query, initial: Array<Message>) {
+export function usePagination(
+  query,
+  initial: Array<Message>
+): [(howMuch: number) => Promise<Message[]>, boolean] {
   const cursor = React.useRef(initial && initial[initial.length - 1]);
+  const [hasMore, setHasMore] = React.useState(
+    !initial || initial.length !== 0 // if initial is an empty array, there is no more
+  );
   const next = async (howMuch = 10) => {
+    if (!hasMore) return [];
     const queryResult = await (cursor.current
       ? query.startAfter(cursor.current)
       : query
@@ -21,32 +28,30 @@ export function usePagination(query, initial: Array<Message>) {
       .get()
       .then(getData);
     cursor.current = queryResult[howMuch - 1];
+    setHasMore(!!cursor.current);
     return queryResult;
   };
-  return next;
+  return [next, hasMore];
 }
 
 export default function useMessages(
   userId,
   initial,
-  { isReplied = false } = {}
+  { isReplied = true } = {}
 ) {
   const query = isReplied
     ? repliedMessagesQuery(userId)
     : unrepliedMessagesQuery(userId);
-  const next = usePagination(query, initial);
+  const [next, hasMore] = usePagination(query, initial);
   const [messages, setMessages] = React.useState<Message[]>(initial || []);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [hasMore, setHasMore] = React.useState(initial && initial.length !== 0);
-  const more = (howMuch = 10) => {
+  const more = (howMuch = 10) =>
     next(howMuch).then((msgs) => {
-      setMessages(msgs);
+      setMessages([...msgs, ...messages]);
       setIsLoading(false);
-      setHasMore(!!msgs[howMuch - 1]);
     });
-  };
   React.useEffect(() => {
-    if (!initial) more();
+    if (!initial) more(10);
     else setIsLoading(false);
   }, []);
   const filterMsg = (msgId) => messages.filter((m) => m.id !== msgId);
